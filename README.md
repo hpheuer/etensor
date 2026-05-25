@@ -1,6 +1,6 @@
 # etensor
 
-**E-Tensor** ist ein auf dem **ESP32-P4** basierendes Gerät zur statistischen Analyse von Hardware-Zufallszahlen nach dem Vorbild des [Global Consciousness Projects (GCP)](https://noosphere.princeton.edu/). Es misst, ob mentale Fokussierung einen messbaren Einfluss auf einen echten Hardware-Zufallsgenerator (TRNG) hat.
+**E-Tensor** ist ein auf dem **ESP32-P4** basierendes Gerät zur statistischen Analyse von Hardware-Zufallszahlen nach dem Vorbild des [Global Consciousness Projects (GCP)](https://en.wikipedia.org/wiki/Global_Consciousness_Project). Es misst, ob mentale Fokussierung einen messbaren Einfluss auf einen echten Hardware-Zufallsgenerator (TRNG) hat.
 
 ## Was es macht
 
