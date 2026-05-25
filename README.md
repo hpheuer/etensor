@@ -1,6 +1,6 @@
 # etensor
 
-**E-Tensor** ist ein auf dem **ESP32-P4** basierendes Gerät zur statistischen Analyse von Hardware-Zufallszahlen nach dem Vorbild des [Global Consciousness Projects (GCP)](https://grokipedia.com/page/Global_Consciousness_Project). Es misst, ob mentale Fokussierung einen messbaren Einfluss auf einen echten Hardware-Zufallsgenerator (TRNG) hat.
+**E-Tensor** ist ein auf dem **ESP32-P4** basierendes Gerät zur statistischen Analyse von Hardware-Zufallszahlen nach dem Vorbild des [Global Consciousness Projects (GCP)](https://grokipedia.com/page/Global_Consciousness_Project). Es misst, ob mentale Fokussierung einen messbaren Einfluss auf einen echten Hardware-Zufallsgenerator (TRNG) hat. [Weitere persönliche Infos](http://ichbinwasichbin.de/html/pendeln.html)
 
 ## Was es macht
 
@@ -78,7 +78,7 @@ Entwicklung mit **VS Code + Espressif ESP-IDF Extension**:
    Man darf keinerlei Vorurteil oder Erwartungshaltung haben: Ein „Ja" muss genauso akzeptabel sein wie ein „Nein".
 4. **Maximal stark nur auf diese Frage konzentrieren!**  
    Konzentration halten, **▶ Start** drücken, Ergebnis abwarten (~5 Sekunden)
-5. **„Eine weitere Frage"** für eine neue Messung
+5. **„Eine weitere Frage"** für eine neue Messung (**NICHT** die gleiche)
 
 ## Home Assistant Integration
 
