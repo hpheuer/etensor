@@ -3,6 +3,7 @@ idf_component_register(
         "etensor.c"
         "sensor.c"
         "httpkram.c"
+        "ha_push.c"
     INCLUDE_DIRS
         "."
     REQUIRES
@@ -15,4 +16,5 @@ idf_component_register(
         esp_timer
         nvs_flash
         esp_hw_support
+        esp_http_client
 )

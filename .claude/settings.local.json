@@ -5,7 +5,18 @@
       "PowerShell(gh auth status)",
       "PowerShell(winget install --id GitHub.cli --silent --accept-package-agreements --accept-source-agreements)",
       "PowerShell($env:PATH = [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"User\"\\); gh --version)",
-      "PowerShell($env:PATH = [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"User\"\\); gh auth status)"
+      "PowerShell($env:PATH = [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"PATH\", \"User\"\\); gh auth status)",
+      "Bash(mkdir -p \"d:/e-tensor/etensor/.vscode\")",
+      "Bash(Remove-Item \"d:\\\\e-tensor\\\\etensor\\\\tasks.json\")",
+      "PowerShell(Remove-Item \"d:\\\\e-tensor\\\\etensor\\\\tasks.json\" -Confirm:$false)",
+      "PowerShell(Get-Command python -ErrorAction SilentlyContinue)",
+      "Read(//c//**)",
+      "PowerShell(cmd /c \"dir C:\\\\Users\\\\info\\\\.vscode\")",
+      "PowerShell(cmd /c \"dir C:\\\\Users\\\\info\\\\.vscode\\\\extensions | findstr /i esp\")"
+    ],
+    "additionalDirectories": [
+      "d:\\e-tensor\\etensor\\.vscode",
+      "C:\\Users\\info\\AppData\\Roaming\\Code\\User"
     ]
   }
 }

@@ -3,6 +3,7 @@
 // ==================================================================
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
@@ -14,6 +15,7 @@
 #include "esp_spiffs.h"
 #include "esp_system.h"
 #include "etensor.h"
+#include "ha_push.h"
 
 static const char *TAG = "HTTP";
 
@@ -158,7 +160,9 @@ static void send_main_page(httpd_req_t *req)
     httpd_resp_sendstr_chunk(req,
         "</head><body>"
         "<h1>&#9889; E-Tensor</h1>"
-        "<div class='sub'>Waveshare ESP32-P4-ETH &bull; IP101GRI &bull; RMII</div>"
+        "<div class='sub'>Waveshare ESP32-P4-ETH &bull; IP101GRI &bull; RMII"
+        "&nbsp;&nbsp;<a href='/config' style='color:#444;text-decoration:none;"
+        "font-size:0.95em;' title='Konfiguration'>&#9881;</a></div>"
     );
 
     // Start-Button (gesperrt während Messung)
@@ -279,7 +283,7 @@ static esp_err_t run_post_handler(httpd_req_t *req)
         memset(output_buf, 0, OUTPUT_BUF_SIZE);
         doit_running   = true;
         output_len     = snprintf(output_buf, OUTPUT_BUF_SIZE, "Messung laeuft...");
-        xTaskCreate(doit_task, "doit", 8192, NULL, 5, NULL);
+        xTaskCreate(doit_task, "doit", 16384, NULL, 5, NULL);
         ESP_LOGI(TAG, "doit_task gestartet");
     } else {
         ESP_LOGW(TAG, "Messung laeuft bereits – Anfrage ignoriert");
@@ -314,6 +318,151 @@ static esp_err_t reset_post_handler(httpd_req_t *req)
 }
 
 // ------------------------------------------------------------------
+//  Hilfsfunktionen: URL-Decode und Formularfeld-Parser
+// ------------------------------------------------------------------
+static void url_decode(char *dst, const char *src, size_t max_len)
+{
+    size_t i = 0;
+    while (*src && i < max_len - 1) {
+        if (*src == '+') {
+            dst[i++] = ' '; src++;
+        } else if (*src == '%' && src[1] && src[2]) {
+            char hex[3] = {src[1], src[2], 0};
+            dst[i++] = (char)strtol(hex, NULL, 16);
+            src += 3;
+        } else {
+            dst[i++] = *src++;
+        }
+    }
+    dst[i] = '\0';
+}
+
+static void parse_field(const char *body, const char *field,
+                        char *out, size_t max_len)
+{
+    char key[32];
+    snprintf(key, sizeof(key), "%s=", field);
+    const char *p = strstr(body, key);
+    if (!p) { out[0] = '\0'; return; }
+    p += strlen(key);
+    const char *end = strchr(p, '&');
+    size_t len = end ? (size_t)(end - p) : strlen(p);
+    if (len >= max_len) len = max_len - 1;
+    char encoded[512] = {0};
+    if (len >= sizeof(encoded)) len = sizeof(encoded) - 1;
+    memcpy(encoded, p, len);
+    url_decode(out, encoded, max_len);
+}
+
+// ------------------------------------------------------------------
+//  Handler: GET /config
+// ------------------------------------------------------------------
+static esp_err_t config_get_handler(httpd_req_t *req)
+{
+    char cur_url[256] = {0};
+    ha_config_load_url(cur_url, sizeof(cur_url));
+    bool token_set = ha_token_is_set();
+
+    httpd_resp_set_type(req, "text/html");
+    httpd_resp_sendstr_chunk(req,
+        "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+        "<meta name='viewport' content='width=device-width, initial-scale=1'>"
+        "<title>E-Tensor Konfiguration</title><style>"
+        "body{font-family:monospace;background:#1a1a2e;color:#eee;"
+        "max-width:700px;margin:20px auto;padding:15px;}"
+        "h1{color:#00d4ff;margin-bottom:4px;font-size:1.4em;}"
+        ".sub{color:#888;font-size:0.85em;margin-bottom:20px;}"
+        ".card{background:#0f0f23;border:1px solid #333;padding:15px;"
+        "margin-bottom:15px;}"
+        "label{color:#888;font-size:0.85em;display:block;margin-bottom:4px;}"
+        "input,textarea{width:100%;box-sizing:border-box;background:#2a2a3e;"
+        "color:#eee;border:2px solid #555;padding:10px;"
+        "font-family:monospace;font-size:0.9em;margin-bottom:14px;"
+        "caret-color:#eee;outline:none;border-radius:3px;}"
+        "input:focus,textarea:focus{border-color:#00d4ff;}"
+        "textarea{resize:vertical;height:80px;}"
+        ".btn{background:#00ff88;color:#000;border:none;padding:10px 24px;"
+        "cursor:pointer;font-size:1em;font-weight:bold;width:100%;}"
+        ".btn:hover{background:#00cc66;}"
+        ".note{color:#555;font-size:0.8em;margin-top:-10px;margin-bottom:14px;}"
+        ".back{color:#555;font-size:0.85em;text-decoration:none;"
+        "display:block;text-align:center;margin-top:14px;}"
+        ".back:hover{color:#888;}"
+        ".ok{color:#00ff88;} .warn{color:#ffcc00;}"
+        "</style></head><body>"
+        "<h1>&#9881; Konfiguration</h1>"
+        "<div class='sub'>Home Assistant Integration</div>"
+        "<div class='card'>"
+        "<form method='post' action='/config'>"
+    );
+
+    // URL-Feld mit aktuellem Wert (als ein Chunk – leerer Chunk würde HTTP beenden!)
+    {
+        char input_buf[512];
+        snprintf(input_buf, sizeof(input_buf),
+            "<label>Home Assistant URL</label>"
+            "<input type='text' name='ha_url' "
+            "placeholder='http://192.168.1.100:8123' value='%s'>",
+            cur_url);
+        httpd_resp_sendstr_chunk(req, input_buf);
+    }
+
+    // Token-Feld – nie den echten Token anzeigen
+    httpd_resp_sendstr_chunk(req, "<label>Long-Lived Access Token</label>");
+    httpd_resp_sendstr_chunk(req,
+        "<textarea name='ha_token' "
+        "placeholder='eyJ0eXAiOiJKV1Qi...'></textarea>");
+    if (token_set) {
+        httpd_resp_sendstr_chunk(req,
+            "<div class='note ok'>&#10003; Token bereits hinterlegt "
+            "– leer lassen um ihn beizubehalten</div>");
+    } else {
+        httpd_resp_sendstr_chunk(req,
+            "<div class='note warn'>&#9888; Noch kein Token gespeichert</div>");
+    }
+
+    httpd_resp_sendstr_chunk(req,
+        "<button class='btn' type='submit'>&#10003; Speichern</button>"
+        "</form></div>"
+        "<a class='back' href='/'>&#8592; zur&uuml;ck</a>"
+        "</body></html>"
+    );
+    httpd_resp_sendstr_chunk(req, NULL);
+    return ESP_OK;
+}
+
+// ------------------------------------------------------------------
+//  Handler: POST /config
+// ------------------------------------------------------------------
+static esp_err_t config_post_handler(httpd_req_t *req)
+{
+    // body auf dem Heap – nicht im HTTP-Task-Stack (nur 4 KB)
+    char *body = calloc(1, 900);
+    if (!body) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "OOM");
+        return ESP_FAIL;
+    }
+    int len = req->content_len;
+    if (len <= 0 || len >= 899) len = 899;
+    httpd_req_recv(req, body, len);
+
+    char url[256]   = {0};
+    char token[512] = {0};
+    parse_field(body, "ha_url",   url,   sizeof(url));
+    parse_field(body, "ha_token", token, sizeof(token));
+    free(body);
+
+    ha_config_save(url, token);
+    ESP_LOGI(TAG, "HA Konfiguration: URL=%s token=%s",
+             url, strlen(token) > 0 ? "gesetzt" : "unveraendert");
+
+    httpd_resp_set_status(req, "303 See Other");
+    httpd_resp_set_hdr(req, "Location", "/config");
+    httpd_resp_send(req, NULL, 0);
+    return ESP_OK;
+}
+
+// ------------------------------------------------------------------
 //  Webserver starten
 // ------------------------------------------------------------------
 void start_webserver(void)
@@ -321,7 +470,7 @@ void start_webserver(void)
     httpd_config_t config    = HTTPD_DEFAULT_CONFIG();
     config.recv_wait_timeout = 30;
     config.send_wait_timeout = 30;
-    config.max_uri_handlers  = 8;
+    config.max_uri_handlers  = 10;
 
     httpd_handle_t server = NULL;
     if (httpd_start(&server, &config) != ESP_OK) {
@@ -336,8 +485,10 @@ void start_webserver(void)
         { .uri="/favicon-32x32.png",   .method=HTTP_GET,  .handler=favicon32_handler   },
         { .uri="/favicon-16x16.png",   .method=HTTP_GET,  .handler=favicon16_handler   },
         { .uri="/apple-touch-icon.png",.method=HTTP_GET,  .handler=apple_icon_handler  },
+        { .uri="/config",              .method=HTTP_GET,  .handler=config_get_handler  },
+        { .uri="/config",              .method=HTTP_POST, .handler=config_post_handler },
     };
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 8; i++)
         httpd_register_uri_handler(server, &uris[i]);
 
     ESP_LOGI(TAG, "Webserver laeuft auf Port 80");

@@ -13,6 +13,7 @@
 #include "esp_task_wdt.h"
 
 #include "etensor.h"
+#include "ha_push.h"
 
 // Stub: verhindert Linker-Fehler wegen fehlender Implementierung
 clock_t times(struct tms *buf) {
@@ -191,6 +192,9 @@ void Doit(void)
     
     ESP_LOGI(TAG, "GCP fertig: Baseline=%.4f Z=%.4f ChiSq=%.4f",
              baseline_mean, total_z, total_chisq);
+
+    // Ergebnisse an Home Assistant senden (nur wenn konfiguriert)
+    ha_push_results(baseline_mean, total_z, total_chisq, direction, significance);
 }
 
 // ------------------------------------------------------------------
