@@ -24,8 +24,9 @@ Die Bedienung läuft vollständig über einen integrierten Webserver – keine A
 
 ## Software-Stack
 
-- **ESP-IDF** (FreeRTOS, ESP-HTTP-Server, SPIFFS, NVS)
+- **ESP-IDF** (FreeRTOS, ESP-HTTP-Server, SPIFFS, NVS, mDNS)
 - Webserver mit dynamisch gerenderten HTML-Seiten
+- mDNS: Gerät ist automatisch als `etensor.local` erreichbar – keine IP-Suche nötig
 - SPIFFS-Partition für statische Assets (Icons etc.)
 - Eigene Partitionstabelle (`partitions.csv`)
 
@@ -72,31 +73,51 @@ Entwicklung mit **VS Code + Espressif ESP-IDF Extension**:
 ## Benutzung
 
 1. Gerät per Ethernet verbinden und einschalten
-2. IP-Adresse aus dem seriellen Monitor ablesen
-3. Browser öffnen → IP-Adresse eingeben
-4. **Eine mit Ja oder Nein eindeutig beantwortbare Frage formulieren – am besten aufschreiben**  
-Man darf keinerlei Vorurteil oder Erwartungshaltung haben: Ein „Ja" muss genauso akzeptabel sein wie ein „Nein".  
- **Maximal stark nur auf diese Frage konzentrieren!**.
-5. Konzentration halten, **▶ Start** drücken, Ergebnis abwarten (~5 Sekunden)
-6. **„Eine weitere Frage"** für eine neue Messung
+2. Browser öffnen → **`http://etensor.local`** (keine IP-Suche nötig)
+3. Eine mit Ja oder Nein eindeutig beantwortbare Frage formulieren – am besten aufschreiben.  
+   Man darf keinerlei Vorurteil oder Erwartungshaltung haben: Ein „Ja" muss genauso akzeptabel sein wie ein „Nein".
+4. **Maximal stark nur auf diese Frage konzentrieren!**  
+   Konzentration halten, **▶ Start** drücken, Ergebnis abwarten (~5 Sekunden)
+5. **„Eine weitere Frage"** für eine neue Messung
 
 ## Home Assistant Integration
 
-Der E-Tensor kann Messergebnisse automatisch nach jeder Messung an **Home Assistant** übertragen. Die Einrichtung erfolgt einmalig über die integrierte Konfigurationsseite – ohne MQTT-Broker oder zusätzliche Software.
+Der E-Tensor lässt sich vollständig in **Home Assistant** einbinden – Messungen können vom HA-Dashboard aus gestartet werden, und die Ergebnisse werden automatisch als Sensoren übertragen. Kein MQTT-Broker, keine zusätzliche Software erforderlich.
 
 ### Voraussetzungen
 
 - Home Assistant läuft im lokalen Netzwerk (HTTP, kein HTTPS erforderlich)
 - E-Tensor und HA sind im selben Netzwerk
 
-### Einrichtung
+### Schritt 1 – E-Tensor konfigurieren
 
-1. Browser öffnen → `http://[etensor-ip]/config` (oder ⚙-Symbol neben dem Gerätenamen)
+1. Browser öffnen → `http://etensor.local/config` (oder ⚙-Symbol neben dem Gerätenamen)
 2. **Home Assistant URL** eingeben, z.B. `http://192.168.1.100:8123`
 3. **Long-Lived Access Token** erstellen und einfügen:
    - HA → Profil (unten links) → Sicherheit → *Langlebige Zugriffstoken* → Token erstellen
 4. **Speichern** drücken
-5. Nächste Messung starten – die Daten werden automatisch übertragen
+
+### Schritt 2 – HA konfigurieren
+
+Folgenden Block in die `configuration.yaml` von Home Assistant einfügen und HA neu starten:
+
+```yaml
+rest_command:
+  etensor_start:
+    url: "http://etensor.local/api/start"
+    method: POST
+    content_type: "application/json"
+    payload: "{}"
+```
+
+### Schritt 3 – Dashboard-Karte anlegen
+
+Den Inhalt von `ha_dashboard_cards.yaml` im HA-Dashboard über den Raw-Konfigurationseditor einfügen. Die Karte zeigt:
+
+- **Start-Button** (nur sichtbar wenn keine Messung läuft)
+- **„Messung läuft..."** Anzeige während der Messung
+- **Ergebnis** (👍 / 👎) nach Abschluss
+- **Detailtabelle** mit Z-Score, p-Wert, Richtung, Chi² und Baseline
 
 ### Sensoren in Home Assistant
 
@@ -104,12 +125,14 @@ Nach der ersten Messung erscheinen folgende Entitäten automatisch in HA:
 
 | Entität | Beschreibung | Beispiel |
 |---|---|---|
+| `sensor.etensor_status` | Aktueller Status | `idle` / `running` / `done` |
+| `sensor.etensor_result` | Ergebnis als Emoji | 👍 / 👍👍 / 👎 / 👎👎 |
 | `sensor.etensor_zscore` | Z-Score der Messung | `+3.93` |
 | `sensor.etensor_chisq` | Chi²-Wert | `15.44` |
 | `sensor.etensor_direction` | Richtung | `positiv` |
 | `sensor.etensor_pvalue` | Statistischer p-Wert | `p < 0.001 (hoch signifikant!)` |
 | `sensor.etensor_baseline` | Baseline-Korrekturwert | `+0.17` |
 
-Die Sensoren sind unter **Einstellungen → Geräte & Dienste → Entitäten** zu finden (nach „etensor" filtern). Sie können auf Dashboards platziert, im Verlauf verfolgt oder in Automatisierungen verwendet werden.
+Die Sensoren sind unter **Einstellungen → Geräte & Dienste → Entitäten** zu finden (nach „etensor" filtern).
 
 > **Hinweis:** Die Entitäten erscheinen als „Nicht gruppiert" – das ist normal, da sie direkt über die REST API angelegt werden.

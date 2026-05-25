@@ -1,0 +1,4 @@
+## IDF Component Manager – Abhängigkeiten für main
+dependencies:
+  idf: ">=6.0.0"
+  espressif/mdns: "*"

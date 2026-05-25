@@ -136,6 +136,42 @@ static void ha_push_one(const char *ha_url, const char *token,
 }
 
 // ------------------------------------------------------------------
+//  Status an HA senden (kurzer Timeout – blockiert Messstart kaum)
+// ------------------------------------------------------------------
+void ha_push_status(const char *status)
+{
+    char url[MAX_URL_LEN];
+    char token[MAX_TOKEN_LEN];
+    if (!ha_config_load(url, sizeof(url), token, sizeof(token))) return;
+
+    char full_url[MAX_URL_LEN + 64];
+    snprintf(full_url, sizeof(full_url), "%s/api/states/sensor.etensor_status", url);
+
+    char auth[MAX_TOKEN_LEN + 8];
+    snprintf(auth, sizeof(auth), "Bearer %s", token);
+
+    char body[256];
+    snprintf(body, sizeof(body),
+        "{\"state\":\"%s\",\"attributes\":"
+        "{\"friendly_name\":\"ETensor Status\",\"icon\":\"mdi:eye\"}}",
+        status);
+
+    esp_http_client_config_t cfg = {
+        .url        = full_url,
+        .method     = HTTP_METHOD_POST,
+        .timeout_ms = 2000,
+        .buffer_size = 512,
+    };
+    esp_http_client_handle_t client = esp_http_client_init(&cfg);
+    esp_http_client_set_header(client, "Authorization",  auth);
+    esp_http_client_set_header(client, "Content-Type",   "application/json");
+    esp_http_client_set_post_field(client, body, strlen(body));
+    esp_http_client_perform(client);
+    esp_http_client_cleanup(client);
+    ESP_LOGI(TAG, "Status → HA: %s", status);
+}
+
+// ------------------------------------------------------------------
 //  Alle Messergebnisse an HA senden
 // ------------------------------------------------------------------
 void ha_push_results(double baseline, double zscore, double chisq,
@@ -173,6 +209,19 @@ void ha_push_results(double baseline, double zscore, double chisq,
     ha_push_one(url, token, "sensor.etensor_baseline", val,
                 "ETensor Baseline", "",
                 "mdi:chart-line");
+
+    // Ergebnis-Emoji (UTF-8 Daumen)
+    const char *thumb;
+    double absZ = zscore < 0 ? -zscore : zscore;
+    if (zscore >= 0)
+        thumb = (absZ > 3.29) ? "\xf0\x9f\x91\x8d\xf0\x9f\x91\x8d" : "\xf0\x9f\x91\x8d";
+    else
+        thumb = (absZ > 3.29) ? "\xf0\x9f\x91\x8e\xf0\x9f\x91\x8e" : "\xf0\x9f\x91\x8e";
+    ha_push_one(url, token, "sensor.etensor_result", thumb,
+                "ETensor Ergebnis", "", "mdi:thumb-up");
+
+    // Status auf done setzen
+    ha_push_status("done");
 
     ESP_LOGI(TAG, "HA Push abgeschlossen");
 }

@@ -17,4 +17,5 @@ idf_component_register(
         nvs_flash
         esp_hw_support
         esp_http_client
+        mdns
 )

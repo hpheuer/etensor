@@ -16,6 +16,7 @@
 #include "esp_system.h"
 #include "etensor.h"
 #include "ha_push.h"
+#include "mdns.h"
 
 static const char *TAG = "HTTP";
 
@@ -355,6 +356,31 @@ static void parse_field(const char *body, const char *field,
 }
 
 // ------------------------------------------------------------------
+//  Handler: POST /api/start  – Messung per HA oder HTTP auslösen
+// ------------------------------------------------------------------
+static esp_err_t api_start_handler(httpd_req_t *req)
+{
+    httpd_resp_set_type(req, "application/json");
+    if (doit_running) {
+        httpd_resp_sendstr(req, "{\"status\":\"busy\"}");
+        return ESP_OK;
+    }
+    current_result = RESULT_NONE;
+    output_len     = 0;
+    memset(output_buf, 0, OUTPUT_BUF_SIZE);
+    doit_running   = true;
+    output_len     = snprintf(output_buf, OUTPUT_BUF_SIZE, "Messung laeuft...");
+
+    // Status sofort an HA melden (kurzer Timeout)
+    ha_push_status("running");
+
+    xTaskCreate(doit_task, "doit", 16384, NULL, 5, NULL);
+    ESP_LOGI(TAG, "doit_task gestartet via /api/start");
+    httpd_resp_sendstr(req, "{\"status\":\"started\"}");
+    return ESP_OK;
+}
+
+// ------------------------------------------------------------------
 //  Handler: GET /config
 // ------------------------------------------------------------------
 static esp_err_t config_get_handler(httpd_req_t *req)
@@ -470,7 +496,7 @@ void start_webserver(void)
     httpd_config_t config    = HTTPD_DEFAULT_CONFIG();
     config.recv_wait_timeout = 30;
     config.send_wait_timeout = 30;
-    config.max_uri_handlers  = 10;
+    config.max_uri_handlers  = 12;
 
     httpd_handle_t server = NULL;
     if (httpd_start(&server, &config) != ESP_OK) {
@@ -487,9 +513,20 @@ void start_webserver(void)
         { .uri="/apple-touch-icon.png",.method=HTTP_GET,  .handler=apple_icon_handler  },
         { .uri="/config",              .method=HTTP_GET,  .handler=config_get_handler  },
         { .uri="/config",              .method=HTTP_POST, .handler=config_post_handler },
+        { .uri="/api/start",           .method=HTTP_POST, .handler=api_start_handler   },
     };
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 9; i++)
         httpd_register_uri_handler(server, &uris[i]);
+
+    // mDNS: Gerät als "etensor.local" im Netzwerk bekannt machen
+    mdns_init();
+    mdns_hostname_set("etensor");
+    mdns_instance_name_set("E-Tensor GCP Device");
+    mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0);
+    ESP_LOGI(TAG, "mDNS: erreichbar als http://etensor.local");
+
+    // Initialstatus an HA melden
+    ha_push_status("idle");
 
     ESP_LOGI(TAG, "Webserver laeuft auf Port 80");
 }

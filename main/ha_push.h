@@ -18,3 +18,6 @@ void ha_config_load_url(char *out, size_t len);
 
 // Prüfen ob Token bereits hinterlegt ist
 bool ha_token_is_set(void);
+
+// Status an HA senden: "idle" / "running" / "done" (kurzer Timeout, blockiert nicht lange)
+void ha_push_status(const char *status);

@@ -1,0 +1,11 @@
+# ============================================================
+#  E-Tensor – Home Assistant Konfiguration
+#  In configuration.yaml einfügen, danach HA neu starten
+# ============================================================
+
+rest_command:
+  etensor_start:
+    url: "http://etensor.local/api/start"
+    method: POST
+    content_type: "application/json"
+    payload: "{}"
