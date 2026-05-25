@@ -89,6 +89,8 @@ Der E-Tensor lässt sich vollständig in **Home Assistant** einbinden – Messun
 - Home Assistant läuft im lokalen Netzwerk (HTTP, kein HTTPS erforderlich)
 - E-Tensor und HA sind im selben Netzwerk
 
+![E-Tensor Konfigurationsseite](Screenshot_configHA.png)
+
 ### Schritt 1 – E-Tensor konfigurieren
 
 1. Browser öffnen → `http://etensor.local/config` (oder ⚙-Symbol neben dem Gerätenamen)
