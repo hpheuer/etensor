@@ -59,6 +59,10 @@ Entwicklung mit **VS Code + Espressif ESP-IDF Extension**:
 
 > **Target:** `esp32p4` – niemals ein anderes Target verwenden!
 
+## Screenshot
+
+![E-Tensor Web-UI](Screenshot.png)
+
 ## Benutzung
 
 1. Gerät per Ethernet verbinden und einschalten
