@@ -64,5 +64,5 @@ Entwicklung mit **VS Code + Espressif ESP-IDF Extension**:
 1. Gerät per Ethernet verbinden und einschalten
 2. IP-Adresse aus dem seriellen Monitor ablesen
 3. Browser öffnen → IP-Adresse eingeben
-4. Konzentrieren, **▶ Start** drücken, Ergebnis abwarten (~1–2 Minuten)
+4. Konzentrieren, **▶ Start** drücken, Ergebnis abwarten (~10 Sekunden)
 5. **„Eine weitere Frage"** für eine neue Messung
