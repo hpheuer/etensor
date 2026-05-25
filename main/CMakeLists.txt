@@ -1,0 +1,18 @@
+idf_component_register(
+    SRCS
+        "etensor.c"
+        "sensor.c"
+        "httpkram.c"
+    INCLUDE_DIRS
+        "."
+    REQUIRES
+        freertos
+        esp_eth
+        esp_netif
+        esp_event
+        esp_http_server
+        spiffs
+        esp_timer
+        nvs_flash
+        esp_hw_support
+)

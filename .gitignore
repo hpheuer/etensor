@@ -1,0 +1,11 @@
+# ESP-IDF Build-Ausgabe
+build/
+sdkconfig.old
+
+# VS Code (optional – lokale Einstellungen)
+.vscode/
+
+# Temporäre Dateien
+*.log
+*.tmp
+*.bak
