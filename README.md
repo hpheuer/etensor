@@ -74,8 +74,9 @@ Entwicklung mit **VS Code + Espressif ESP-IDF Extension**:
 1. Gerät per Ethernet verbinden und einschalten
 2. IP-Adresse aus dem seriellen Monitor ablesen
 3. Browser öffnen → IP-Adresse eingeben
-4. **Eine mit Ja oder Nein eindeutig beantwortbare Frage formulieren – am besten aufschreiben. Man darf keinerlei Vorurteil oder Erwartungshaltung haben: Ein „Ja" muss genauso akzeptabel sein wie ein „Nein". Maximal stark nur auf diese Frage konzentrieren.**
-5. Konzentration halten, **▶ Start** drücken, Ergebnis abwarten (~10 Sekunden)
+4. **Eine mit Ja oder Nein eindeutig beantwortbare Frage formulieren – am besten aufschreiben**  Man darf keinerlei Vorurteil oder Erwartungshaltung haben: Ein „Ja" muss genauso akzeptabel sein wie ein „Nein".  
+ **Maximal stark nur auf diese Frage konzentrieren!**.
+5. Konzentration halten, **▶ Start** drücken, Ergebnis abwarten (~5 Sekunden)
 6. **„Eine weitere Frage"** für eine neue Messung
 
 ## Home Assistant Integration
