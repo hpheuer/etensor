@@ -61,9 +61,13 @@ Entwicklung mit **VS Code + Espressif ESP-IDF Extension**:
 
 > **Target:** `esp32p4` – niemals ein anderes Target verwenden!
 
-## Screenshot
+## Screenshots
 
-![E-Tensor Web-UI](Screenshot.png)
+### Startbildschirm
+![E-Tensor Startbildschirm](Screenshot_start.png)
+
+### Ergebnis nach einer Messung
+![E-Tensor Ergebnis](Screenshot.png)
 
 ## Benutzung
 
